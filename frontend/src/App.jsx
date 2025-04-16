@@ -7,6 +7,8 @@ import Header from './components/Header'
 import Hero from './components/Hero'
 import MatchSection from './components/MatchSection'
 import ResultsSection from './components/ResultsSection'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import AiChat from './pages/AiChat'
 
 export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -59,11 +61,34 @@ export default function App() {
   } 
 
   return (
-    <div className="bg-white">
-      <Header />
-      <Hero onScrollToMatch={handleScrollToMatch} />
-      <MatchSection onSearch={handleMatchSearch} loading={loading} scrollRef={matchSectionRef} resetCounter={resetCounter} />
-      {matches.length > 0 && <ResultsSection matches={matches} scrollRef={resultsRef} visibleCount={visibleCount} loadMore={loadMore} onReset={resetSearch} />}
-    </div>
+    <Router>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <div className="bg-white">
+              <Header />
+              <Hero onScrollToMatch={handleScrollToMatch} />
+              <MatchSection
+                onSearch={handleMatchSearch}
+                loading={loading}
+                scrollRef={matchSectionRef}
+                resetCounter={resetCounter}
+              />
+              {matches.length > 0 && (
+                <ResultsSection
+                  matches={matches}
+                  scrollRef={resultsRef}
+                  visibleCount={visibleCount}
+                  loadMore={loadMore}
+                  onReset={resetSearch}
+                />
+              )}
+            </div>
+          }
+        />
+        <Route path="/ai/chat/:studyName" element={<AiChat />} />
+      </Routes>
+    </Router>
   )
 }

@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 export default function MatchCard({ title, description, url, score, rank }) {
   const descriptionMaxLength = 130;
   const shortenedDescription =
@@ -24,7 +26,15 @@ export default function MatchCard({ title, description, url, score, rank }) {
         >
           Læs mere på UG.dk <span aria-hidden="true">↗</span>
         </a>
-
+        <Link
+          to={`/ai/chat/${encodeURIComponent(title)}`}
+          className="mt-2 inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm rounded-md shadow-md hover:shadow-lg hover:brightness-105 transition-all duration-200"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 20l9-5-9-5-9 5 9 5zm0-10V4m0 0l3 3m-3-3L9 7" />
+          </svg>
+          Chat med AI
+        </Link>
           {/* Badge */}
           
           <span

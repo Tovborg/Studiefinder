@@ -3,6 +3,8 @@ import { Dialog, DialogPanel } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useGoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../context/AuthContext'
+import UserDropdown from '../components/UserDropdown'
+import MobileUserMenu from '../components/MobileUserMenu'
 
 const navigation = [
   { name: 'Produkt', href: '#' },
@@ -63,10 +65,7 @@ export default function Header() {
         </div>
         <div className="hidden lg:flex lg:flex-1 lg:justify-end">
           {user ? (
-            <div className="flex items-center gap-2">
-              <img src={user.picture} className="w-8 h-8 rounded-full" alt="profil" />
-              <span className="text-sm font-medium text-gray-800">{user.name}</span>
-            </div>
+            <UserDropdown />
           ) : (
           <button
             onClick={() => googleLogin()}
@@ -124,12 +123,7 @@ export default function Header() {
               </div>
               <div className="py-6">
               {user ? (
-                <div className="flex items-center gap-2 w-full px-3 py-2.5">
-                  <img src={user.picture} alt="profil" className="w-8 h-8 rounded-full" />
-                  <span className="text-base font-semibold text-gray-900">
-                    {user.name}
-                  </span>
-                </div>
+                <MobileUserMenu />
               ) : (
                 <button
                   onClick={() => googleLogin()}

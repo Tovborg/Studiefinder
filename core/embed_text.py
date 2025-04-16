@@ -1,34 +1,36 @@
-import requests
-import json
-# import beautifulsoup4
-from bs4 import BeautifulSoup
-import re
 import os
+import subprocess
 import pandas as pd
-
-df = pd.read_csv("uddannelser_full.csv")
-
-df["combined_text"] = (
-    df["Introduktion"].fillna("") + "\n\n" +
-    df["undervisning"].fillna("") + "\n\n" +
-    df["adgangskrav"].fillna("") + "\n\n" +
-    df["fremtidsmuligheder"].fillna("")
-).str.strip()
-
-df_match = df[["titel", "kategori", "url", "combined_text"]].copy()
-df_match.to_csv("match_ready.csv", index=False, encoding="utf-8")
-
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-print("Indlæser transformer...")
-model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+# # Slet gamle filer hvis de findes
+# if os.path.exists("data/match_ready.csv"):
+#     print("🗑️ Sletter tidligere match_ready.csv...")
+#     os.remove("data/match_ready.csv")
 
-# Embed kombineret tekst
-print("Genererer embeddings...")
-embeddings = model.encode(df_match["combined_text"].tolist(), show_progress_bar=True)
+if os.path.exists("embeddings/uddannelse_embeddings_mpnet.npy"):
+    print("🗑️ Sletter tidligere embeddings...")
+    os.remove("embeddings/uddannelse_embeddings_mpnet.npy")
 
-# Gem embeddings til fil
-print("Gemmer embeddings...")
-np.save("uddannelse_embeddings.npy", embeddings)
-print("Embeddings gemt som uddannelse_embeddings.npy")
+# # Kør preprocessing-script
+# print("⚙️ Kører preprocess_text.py...")
+# subprocess.run(["python3", "preprocess_text.py"], check=True)
+
+# Indlæs data
+print("📄 Indlæser nyt augmented_data.csv...")
+df = pd.read_csv("data/deep_augmented_data_final_boosted.csv")
+
+# Indlæs model
+print("🤖 Indlæser transformer model...")
+model = SentenceTransformer("all-mpnet-base-v2")
+
+# Generér embeddings
+print("🧠 Genererer embeddings...")
+# embeddings = model.encode(df["combined_text"].tolist(), show_progress_bar=True)
+embeddings = model.encode(df["final_augmented_text"].tolist(), show_progress_bar=True)
+
+# Gem embeddings
+print("💾 Gemmer embeddings...")
+np.save("embeddings/uddannelse_embeddings_mpnet.npy", embeddings)
+print("✅ Embeddings gemt som uddannelse_embeddings_mpnet.npy")

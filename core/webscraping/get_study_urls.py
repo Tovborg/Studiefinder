@@ -28,7 +28,7 @@ links_to_studies = {
 
 BASE_URL = "https://www.ug.dk"
 
-with open("uddannelser.csv", "w", encoding="utf-8") as f:
+with open("data/uddannelser.csv", "w", encoding="utf-8") as f:
     writer = csv.writer(f)
     writer.writerow(["kategori", "titel", "url"])  # Write header
 

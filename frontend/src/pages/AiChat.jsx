@@ -3,6 +3,7 @@ import Header from '../components/Header'
 import { useEffect, useState, useRef } from 'react'
 import ChatBubble from '../components/ChatBubble.jsx'
 import { useAuth } from '../context/AuthContext'
+import { useLocation } from 'react-router-dom'
 
 
 function ChatInput({ input, setInput, handleSubmit }) {
@@ -35,6 +36,16 @@ export default function AiChat() {
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState([])
   const messagesEndRef = useRef(null)
+  // Hent prompt fra state
+  const location = useLocation()
+  const prompt = location.state?.prompt // safe access
+
+  useEffect(() => {
+    document.title = `AI Chat - ${studyName}`
+    if (prompt) {
+    console.log("📬 Prompt fra tidligere:", prompt)
+    }
+  }, [studyName, prompt])
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -46,14 +57,36 @@ export default function AiChat() {
     document.title = `AI Chat - ${studyName}`
   }, [studyName])
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (input.trim() === "") return
   
     setHasStartedChat(true)
   
     setMessages(prev => [...prev, { role: 'user', content: input }])
-    setInput("")
+    try {
+        const res = await fetch("http://localhost:8000/api/ai-chat/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            original_prompt: prompt, // fra location.state
+            study_name: decodeURIComponent(studyName),
+            user_id: user.id,
+            question: input,
+          }),
+        })
+    
+        const data = await res.json()
+        console.log("🤖 AI svar:", data.reply)
+    
+        setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
+      } catch (err) {
+        console.error("Fejl under API-kald:", err)
+      }
+    
+      setInput("")
   }
 
   return (

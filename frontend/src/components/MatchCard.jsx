@@ -1,6 +1,26 @@
 import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-export default function MatchCard({ title, description, url, score, rank }) {
+export default function MatchCard({ title, description, url, score, rank, prompt }) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [showLoginWarning, setShowLoginWarning] = useState(false);
+
+  const handleAiChatClick =()=>{
+    if (user) {
+      navigate(`/ai/chat/${encodeURIComponent(title)}`, {
+        state: { prompt }
+      });
+    } else {
+      setShowLoginWarning(true);
+      setTimeout(() => {
+        setShowLoginWarning(false);
+      }, 3000); // Hide the warning after 3 seconds
+    }
+  }
+
   const descriptionMaxLength = 130;
   const shortenedDescription =
     description.length > descriptionMaxLength
@@ -26,16 +46,24 @@ export default function MatchCard({ title, description, url, score, rank }) {
         >
           Læs mere på UG.dk <span aria-hidden="true">↗</span>
         </a>
-        <Link
-          to={`/ai/chat/${encodeURIComponent(title)}`}
-          className="mt-2 inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm rounded-md shadow-md hover:shadow-lg hover:brightness-105 transition-all duration-200"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 20l9-5-9-5-9 5 9 5zm0-10V4m0 0l3 3m-3-3L9 7" />
-          </svg>
-          Chat med AI
-        </Link>
-          {/* Badge */}
+        <div className="sm:flex sm:flex-col sm:items-end">
+          <button
+            onClick={handleAiChatClick}
+            className="mt-2 inline-flex w-full sm:w-auto items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm rounded-md shadow-md hover:shadow-lg hover:brightness-105 transition-all duration-200"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 20l9-5-9-5-9 5 9 5zm0-10V4m0 0l3 3m-3-3L9 7" />
+            </svg>
+            Chat med AI
+          </button>
+
+          {showLoginWarning && (
+            <span className="text-xs text-red-500 mt-5 ml-1 sm:ml-0">Du skal være logget ind for at bruge AI-chatten.</span>
+          )}
+        </div>
+        
+        
+        
           
           <span
             className={`

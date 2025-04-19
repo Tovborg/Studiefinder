@@ -1,7 +1,7 @@
 // src/components/ResultsSection.jsx
 import MatchCard from './MatchCard'
 
-export default function ResultsSection({ matches, scrollRef, visibleCount, loadMore, onReset }) {
+export default function ResultsSection({ matches, scrollRef, visibleCount, loadMore, onReset, userPrompt }) {
   return (
     <section
       ref={scrollRef}
@@ -31,6 +31,7 @@ export default function ResultsSection({ matches, scrollRef, visibleCount, loadM
                 url={result.url}
                 score={result.match_score || result.score}
                 rank={idx}
+                prompt={userPrompt}
               />
             </div>
           ))}

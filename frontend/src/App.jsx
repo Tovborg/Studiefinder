@@ -9,6 +9,7 @@ import MatchSection from './components/MatchSection'
 import ResultsSection from './components/ResultsSection'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import AiChat from './pages/AiChat'
+import RequireAuth from './components/RequireAuth'
 
 export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -16,6 +17,7 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [visibleCount, setVisibleCount] = useState(5)
   const [resetCounter, setResetCounter] = useState(0)
+  const [userPrompt, setUserPrompt] = useState('')
   const resultsRef = useRef(null)
   const matchSectionRef = useRef(null)
 
@@ -35,6 +37,7 @@ export default function App() {
 
   const handleMatchSearch = async (input) => {
     setLoading(true)
+    setUserPrompt(input) // Save the user input for potential use in AiChat
     try {
       const response = await fetch('http://localhost:8000/match', {
         method: 'POST',
@@ -82,12 +85,18 @@ export default function App() {
                   visibleCount={visibleCount}
                   loadMore={loadMore}
                   onReset={resetSearch}
+                  userPrompt={userPrompt}
                 />
               )}
             </div>
           }
         />
-        <Route path="/ai/chat/:studyName" element={<AiChat />} />
+
+        <Route path="/ai/chat/:studyName" element={
+          <RequireAuth>
+            <AiChat />
+          </RequireAuth>
+          } />
       </Routes>
     </Router>
   )

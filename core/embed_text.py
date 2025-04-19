@@ -19,7 +19,7 @@ if os.path.exists("embeddings/uddannelse_embeddings_mpnet.npy"):
 
 # Indlæs data
 print("📄 Indlæser nyt augmented_data.csv...")
-df = pd.read_csv("data/deep_augmented_data_final_boosted.csv")
+df = pd.read_csv("data/augmented_data.csv")
 
 # Indlæs model
 print("🤖 Indlæser transformer model...")
@@ -28,7 +28,7 @@ model = SentenceTransformer("all-mpnet-base-v2")
 # Generér embeddings
 print("🧠 Genererer embeddings...")
 # embeddings = model.encode(df["combined_text"].tolist(), show_progress_bar=True)
-embeddings = model.encode(df["final_augmented_text"].tolist(), show_progress_bar=True)
+embeddings = model.encode(df["augmented_text"].tolist(), show_progress_bar=True)
 
 # Gem embeddings
 print("💾 Gemmer embeddings...")

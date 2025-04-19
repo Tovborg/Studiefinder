@@ -3,6 +3,8 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import numpy as np
+from backend.models import SessionLocal, PromptCache
+from sqlalchemy.orm import Session
 import pandas as pd
 import os
 from dotenv import load_dotenv
@@ -18,6 +20,14 @@ client = OpenAI(
     api_key=os.getenv("DEEPSEEK_API"),
     base_url="https://api.deepseek.com",
 )
+
+# Dependency to get the database session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # Load data and model
 load_dotenv()
@@ -119,7 +129,7 @@ def preprocess_prompt_with_llm(user_input: str) -> str:
 
 
 @app.post("/match")
-def match_study(request: MatchRequest):
+def match_study(request: MatchRequest, db: Session = Depends(get_db)):
     """
     Match the user's input with the study programs based on cosine similarity,
     filtered by LLM-classified relevant categories.
@@ -130,15 +140,32 @@ def match_study(request: MatchRequest):
         if not user_input:
             raise HTTPException(status_code=400, detail="User input cannot be empty")
 
-        # 💡 Forbedr prompten med LLM
-        user_input = preprocess_prompt_with_llm(user_input)
+        # 🔍 Check om prompt allerede findes i databasen
+        existing = db.query(PromptCache).filter(PromptCache.original_prompt == user_input).first()
 
-        # 🔎 Lav no-shot kategori filtrering
-        relevant_categories, _ = no_shot_categories(user_input, df["kategori"].unique().tolist())
-        print(f"Relevante kategorier: {relevant_categories}")
+        if existing:
+            print("📦 Prompt fundet i cache")
+            rewritten_prompt = existing.rewritten_prompt
+            relevant_categories = existing.included_categories
+        else:
+            print("✨ Prompt ikke i cache – kalder LLM")
+            # 🔄 Kør LLM-funktionerne og gem resultatet
+            rewritten_prompt = preprocess_prompt_with_llm(user_input)
+            relevant_categories, excluded = no_shot_categories(rewritten_prompt, df["kategori"].unique().tolist())
+
+            # Gem i database
+            cache_entry = PromptCache(
+                original_prompt=user_input,
+                rewritten_prompt=rewritten_prompt,
+                included_categories=relevant_categories,
+                excluded_categories=excluded
+            )
+            db.add(cache_entry)
+            db.commit()
+            db.refresh(cache_entry)
 
         # 🎯 Embedding og similarity
-        user_embedding = model.encode([user_input])
+        user_embedding = model.encode([rewritten_prompt])
         similarity = cosine_similarity(user_embedding, embeddings)[0]
 
         # 💥 Find top-n indekser og filtrér på relevante kategorier
@@ -174,13 +201,6 @@ from sqlalchemy.orm import Session
 class Token(BaseModel):
     access_token: str
 
-# Dependency to get the database session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @app.post("/api/auth/google")
 def google_login(data: Token, db: Session = Depends(get_db)):

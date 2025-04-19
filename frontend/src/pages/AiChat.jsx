@@ -4,7 +4,7 @@ import Header from '../components/Header'
 import { useEffect, useState, useRef } from 'react'
 import ChatBubble from '../components/ChatBubble.jsx'
 import { useAuth } from '../context/AuthContext'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import TypingBubble from '../components/TypingBubble.jsx'
 
 
@@ -94,14 +94,27 @@ export default function AiChat() {
     
       setInput("")
   }
+  const navigate = useNavigate()
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f8f9fc] via-[#f4f2fa] to-[#fefefe] flex flex-col">
       <Header />
-
+      <div className="w-full max-w-3xl text-center mt-20 mb-0 ml-7">
+        <div className="flex justify-start">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-sm text-gray-500 hover:text-gray-800 bg-white/80 backdrop-blur-sm border border-gray-200 px-3 py-1 rounded-full shadow-sm transition"
+          >
+            ← Tilbage
+          </button>
+        </div>
+      </div>
       <main className="flex-1 flex flex-col items-center justify-center px-4 relative">
+        
         {!hasStartedChat && (
-          <div className="w-full max-w-3xl text-center mt-20">
+            <div className="w-full max-w-3xl text-center">
+             {/* Tilbage-knap længere oppe, men stadig venstrestillet */}
+         
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-900 mb-4">
               Hej, hvad vil du gerne vide om{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600">
@@ -132,7 +145,7 @@ export default function AiChat() {
         )}
 
         {hasStartedChat && (
-          <div className="w-full max-w-3xl flex-1 flex flex-col gap-4 px-4 py-8 overflow-y-auto mt-20">
+          <div className="w-full max-w-3xl flex-1 flex flex-col gap-4 px-4 py-8 overflow-y-auto">
             <p className="text-sm mb-3 text-gray-400 text-center">🧠 Klar til at besvare dine spørgsmål...</p>
             {messages.map((msg, idx) => (
               <ChatBubble key={idx} role={msg.role} content={msg.content} user={user} />

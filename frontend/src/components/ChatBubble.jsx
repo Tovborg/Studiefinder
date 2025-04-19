@@ -14,7 +14,7 @@ export default function ChatBubble({ role, content, user }) {
       <div
         className={`flex flex-col max-w-[80%] p-4 rounded-2xl shadow-sm ${
           isUser
-            ? 'bg-indigo-100 text-right rounded-br-none ml-auto'
+            ? 'bg-indigo-100 text-left rounded-br-none ml-auto'
             : 'bg-gray-100 text-left rounded-bl-none'
         }`}
       >

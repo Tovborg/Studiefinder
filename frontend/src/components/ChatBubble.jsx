@@ -1,3 +1,4 @@
+// src/components/ChatBubble.jsx
 export default function ChatBubble({ role, content, user }) {
   const isUser = role === 'user'
 

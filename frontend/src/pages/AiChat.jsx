@@ -1,9 +1,11 @@
+// src/pages/AiChat.jsx
 import { useParams } from 'react-router-dom'
 import Header from '../components/Header'
 import { useEffect, useState, useRef } from 'react'
 import ChatBubble from '../components/ChatBubble.jsx'
 import { useAuth } from '../context/AuthContext'
 import { useLocation } from 'react-router-dom'
+import TypingBubble from '../components/TypingBubble.jsx'
 
 
 function ChatInput({ input, setInput, handleSubmit }) {
@@ -34,6 +36,7 @@ export default function AiChat() {
   const { user } = useAuth()
   const [hasStartedChat, setHasStartedChat] = useState(false)
   const [input, setInput] = useState("")
+  const [isTyping, setIsTyping] = useState(false)
   const [messages, setMessages] = useState([])
   const messagesEndRef = useRef(null)
   // Hent prompt fra state
@@ -62,8 +65,8 @@ export default function AiChat() {
     if (input.trim() === "") return
   
     setHasStartedChat(true)
-  
     setMessages(prev => [...prev, { role: 'user', content: input }])
+    setIsTyping(true) // Simulerer AI-typing
     try {
         const res = await fetch("http://localhost:8000/api/ai-chat/", {
           method: "POST",
@@ -84,6 +87,9 @@ export default function AiChat() {
         setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
       } catch (err) {
         console.error("Fejl under API-kald:", err)
+      } finally {
+        setIsTyping(false)
+        setInput("") // Tøm inputfeltet
       }
     
       setInput("")
@@ -125,16 +131,15 @@ export default function AiChat() {
           </div>
         )}
 
-        {/* Placeholder chat area – du kan tilføje beskeder senere */}
         {hasStartedChat && (
-        <div className="w-full max-w-3xl flex-1 flex flex-col gap-4 px-4 py-8 overflow-y-auto mt-20">
-            {/* Chat messages kommer her senere */}
+          <div className="w-full max-w-3xl flex-1 flex flex-col gap-4 px-4 py-8 overflow-y-auto mt-20">
             <p className="text-sm mb-3 text-gray-400 text-center">🧠 Klar til at besvare dine spørgsmål...</p>
             {messages.map((msg, idx) => (
-            <ChatBubble key={idx} role={msg.role} content={msg.content} user={user} />
+              <ChatBubble key={idx} role={msg.role} content={msg.content} user={user} />
             ))}
+            {isTyping && <TypingBubble />}  {/* 👈 bubble vises her */}
             <div ref={messagesEndRef} />
-        </div>
+          </div>
         )}
 
       </main>

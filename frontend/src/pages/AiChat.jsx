@@ -60,6 +60,41 @@ export default function AiChat() {
     document.title = `AI Chat - ${studyName}`
   }, [studyName])
 
+  useEffect(() => {
+    const fetchChatHistory = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/api/chat-history?user_id=${user.id}&uddannelse_name=${studyName}`)
+        if (!response.ok) {
+          throw new Error("Failed to fetch chat history")
+        }
+  
+        const data = await response.json()
+        if (data.length > 0) {
+          // Populate messages state with chat history
+          const chatMessages = data.flatMap((entry) => [
+            { role: "user", content: entry.user_message },
+            { role: "assistant", content: entry.assistant_message },
+          ])
+  
+          setMessages(chatMessages)
+          setHasStartedChat(true)
+  
+          // Scroll to the bottom to view the latest messages
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+          }
+        } else {
+          setHasStartedChat(false)
+        }
+      } catch (error) {
+        console.error("Error fetching chat history:", error)
+        setHasStartedChat(false)
+      }
+    }
+  
+    fetchChatHistory()
+  }, [studyName, user.id])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (input.trim() === "") return

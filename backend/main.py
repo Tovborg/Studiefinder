@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import numpy as np
-from backend.models import SessionLocal, PromptCache
+from backend.models import SessionLocal, PromptCache, ChatHistory  # Import models
 from sqlalchemy.orm import Session
 import pandas as pd
 import os
@@ -14,10 +14,18 @@ from sklearn.metrics.pairwise import cosine_similarity
 from backend.database import init_db
 from openai import OpenAI
 import os
+from typing import List, Optional
+
 
 # Initialize OpenAI API
+load_dotenv()
+API_KEY = os.getenv("DEEPSEEK_API")
+
+if not API_KEY:
+    raise ValueError("API key for DeepSeek is not set. Please set the DEEPSEEK_API environment variable.")
+
 client = OpenAI(
-    api_key=os.getenv("DEEPSEEK_API"),
+    api_key=API_KEY,
     base_url="https://api.deepseek.com",
 )
 
@@ -30,7 +38,6 @@ def get_db():
         db.close()
 
 # Load data and model
-load_dotenv()
 df = pd.read_csv("core/data/augmented_data.csv")
 embeddings = np.load("core/embeddings/uddannelse_embeddings_mpnet.npy")
 model = SentenceTransformer("all-mpnet-base-v2")
@@ -307,7 +314,8 @@ class ChatRequest(BaseModel):
     question: str
 
 @app.post("/api/ai-chat")
-def chat_with_ai(data: ChatRequest):
+def chat_with_ai(data: ChatRequest, db: Session = Depends(get_db)):
+    # Add authentication check here to prevent unauthorized access
     print("Received chat request:", data.dict())
 
     try:
@@ -326,8 +334,57 @@ def chat_with_ai(data: ChatRequest):
         )
 
         reply = response.choices[0].message.content
+
+        # Save the chat to the database
+        chat_entry = ChatHistory(
+            user_id=data.user_id,
+            uddannelse=data.study_name,
+            user_message=data.question,
+            assistant_message=reply
+        )
+        db.add(chat_entry)
+        db.commit()
+        db.refresh(chat_entry)
+        print("Chat entry saved:", chat_entry)
+
         return {"reply": reply}
 
     except Exception as e:
         print("❌ Fejl i chat endpoint:", str(e))
         raise HTTPException(status_code=500, detail="Fejl ved generering af svar")
+
+class ChatHistoryResponse(BaseModel):
+    id: int
+    user_message: str
+    assistant_message: str
+    created_at: str
+
+@app.get("/api/chat-history", response_model=List[ChatHistoryResponse])
+def get_chat_history(user_id: int, uddannelse_name: str, db: Session = Depends(get_db)):
+    """
+    Retrieve the chat history for a specific user and study program.
+    """
+    try:
+        chat_history = (
+            db.query(ChatHistory)
+            .filter(ChatHistory.user_id == user_id, ChatHistory.uddannelse == uddannelse_name)
+            .order_by(ChatHistory.created_at.asc())
+            .all()
+        )
+        if not chat_history:
+            print("❌ Ingen chat-historik fundet for denne bruger og uddannelse")
+            return []
+        print("📜 Chat-historik hentet:", chat_history)
+        return [
+            ChatHistoryResponse(
+                id=entry.id,
+                user_message=entry.user_message,
+                assistant_message=entry.assistant_message,
+                created_at=entry.created_at.isoformat(),
+            )
+            for entry in chat_history
+        ]
+    
+    except Exception as e:
+        print("❌ Error retrieving chat history:", str(e))
+        raise HTTPException(status_code=500, detail="Error retrieving chat history")

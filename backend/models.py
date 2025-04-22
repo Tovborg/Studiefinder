@@ -1,7 +1,7 @@
 # backend/models.py
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.types import JSON
 from datetime import datetime
 
@@ -31,3 +31,18 @@ class PromptCache(Base):
     included_categories = Column(JSON, nullable=False)
     excluded_categories = Column(JSON, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+class ChatHistory(Base):
+    __tablename__ = "chat_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    uddannelse = Column(String, nullable=False)  # Name of the course
+    user_message = Column(Text, nullable=False)  # User's message
+    assistant_message = Column(Text, nullable=False)  # Assistant's response
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    user = relationship("User", back_populates="chat_history")
+
+# Add relationship to User model
+User.chat_history = relationship("ChatHistory", back_populates="user", cascade="all, delete-orphan")
